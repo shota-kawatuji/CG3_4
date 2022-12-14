@@ -16,9 +16,11 @@ GameScene::~GameScene()
 	delete objSkydome;
 	delete objGround;
 	delete objFighter;
+	delete objSphere;
 	delete modelSkydome;
 	delete modelGround;
 	delete modelFighter;
+	delete modelSphere;
 	delete camera;
 }
 
@@ -55,6 +57,7 @@ void GameScene::Initialize(DirectXCommon* dxCommon, Input* input)
 	objSkydome = Object3d::Create();
 	objGround = Object3d::Create();
 	objFighter = Object3d::Create();
+	objSphere = Object3d::Create();
 
 	// テクスチャ2番に読み込み
 	Sprite::LoadTexture(2, L"Resources/texture.png");
@@ -62,10 +65,14 @@ void GameScene::Initialize(DirectXCommon* dxCommon, Input* input)
 	modelSkydome = Model::CreateFromOBJ("skydome");
 	modelGround = Model::CreateFromOBJ("ground");
 	modelFighter = Model::CreateFromOBJ("chr_sword");
+	modelSphere = Model::CreateFromOBJ("sphere");
 
 	objSkydome->SetModel(modelSkydome);
 	objGround->SetModel(modelGround);
 	objFighter->SetModel(modelFighter);
+	objFighter->SetPosition({ +1,0,0 });
+	objSphere->SetModel(modelSphere);
+	objSphere->SetPosition({ -1,1,0 });
 }
 
 void GameScene::Update()
@@ -75,6 +82,7 @@ void GameScene::Update()
 	objSkydome->Update();
 	objGround->Update();
 	objFighter->Update();
+	objSphere->Update();
 
 	debugText.Print("AD: move camera LeftRight", 50, 50, 1.0f);
 	debugText.Print("WS: move camera UpDown", 50, 70, 1.0f);
@@ -107,9 +115,10 @@ void GameScene::Draw()
 	Object3d::PreDraw(cmdList);
 
 	// 3Dオブクジェクトの描画
-	objSkydome->Draw();
-	objGround->Draw();
+	//objSkydome->Draw();
+	//objGround->Draw();
 	objFighter->Draw();
+	objSphere->Draw();
 
 	/// <summary>
 	/// ここに3Dオブジェクトの描画処理を追加できる
