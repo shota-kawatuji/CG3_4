@@ -19,10 +19,10 @@ void Model::StaticInitialize(ID3D12Device* device) {
 	Mesh::StaticInitialize(device);
 }
 
-Model* Model::CreateFromOBJ(const std::string& modelname) {
+Model* Model::CreateFromOBJ(const std::string& modelname, bool smoothing) {
 	// メモリ確保
 	Model* instance = new Model;
-	instance->Initialize(modelname);
+	instance->Initialize(modelname, smoothing);
 
 	return instance;
 }
@@ -39,7 +39,7 @@ Model::~Model() {
 	materials.clear();
 }
 
-void Model::Initialize(const std::string& modelname) {
+void Model::Initialize(const std::string& modelname, bool smoothing) {
 	const string filename = modelname + ".obj";
 	const string directoryPath = baseDirectory + modelname + "/";
 
@@ -83,6 +83,11 @@ void Model::Initialize(const std::string& modelname) {
 		if (key == "g") {
 
 			if (mesh->GetName().size() > 0) {
+				// エッジ平滑化用データの追加
+				if (smoothing) {
+					// yキー(座標データ)の番号と、全て合成した頂点のインデックスをセットで登録する
+					mesh->CalculateSmoothedVertexNormals();
+				}
 				// コンテナに登録
 				meshes.emplace_back(mesh);
 				// 次のメッシュ生成
@@ -166,7 +171,13 @@ void Model::Initialize(const std::string& modelname) {
 					vertex.normal = normals[indexNormal - 1];
 					vertex.uv = texcoords[indexTexcoord - 1];
 					mesh->AddVertex(vertex);
-				} else {
+					// エッジ平滑化用データの追加
+					if (smoothing) {
+						// yキー(座標データ)の番号と、全て合成した頂点のインデックスをセットで登録する
+						mesh->AddSmoothData(indexPosition, (unsigned short)mesh->GetVertexCount() - 1);
+					}
+				}
+				else {
 					char c;
 					index_stream >> c;
 					// スラッシュ2連続の場合、頂点番号のみ
@@ -174,10 +185,16 @@ void Model::Initialize(const std::string& modelname) {
 						// 頂点データの追加
 						Mesh::VertexPosNormalUv vertex{};
 						vertex.pos = positions[indexPosition - 1];
-						vertex.normal = {0, 0, 1};
-						vertex.uv = {0, 0};
+						vertex.normal = { 0, 0, 1 };
+						vertex.uv = { 0, 0 };
 						mesh->AddVertex(vertex);
-					} else {
+						// エッジ平滑化用データの追加
+						if (smoothing) {
+							// yキー(座標データ)の番号と、全て合成した頂点のインデックスをセットで登録する
+							mesh->AddSmoothData(indexPosition, (unsigned short)mesh->GetVertexCount() - 1);
+						}
+					}
+					else {
 						index_stream.seekg(-1, ios_base::cur); // 1文字戻る
 						index_stream >> indexTexcoord;
 						index_stream.seekg(1, ios_base::cur); // スラッシュを飛ばす
@@ -186,8 +203,13 @@ void Model::Initialize(const std::string& modelname) {
 						Mesh::VertexPosNormalUv vertex{};
 						vertex.pos = positions[indexPosition - 1];
 						vertex.normal = normals[indexNormal - 1];
-						vertex.uv = {0, 0};
+						vertex.uv = { 0, 0 };
 						mesh->AddVertex(vertex);
+						// エッジ平滑化用データの追加
+						if (smoothing) {
+							// yキー(座標データ)の番号と、全て合成した頂点のインデックスをセットで登録する
+							mesh->AddSmoothData(indexPosition, (unsigned short)mesh->GetVertexCount() - 1);
+						}
 					}
 				}
 				// インデックスデータの追加
@@ -197,7 +219,8 @@ void Model::Initialize(const std::string& modelname) {
 					mesh->AddIndex(indexCountTex - 1);
 					mesh->AddIndex(indexCountTex);
 					mesh->AddIndex(indexCountTex - 3);
-				} else {
+				}
+				else {
 					mesh->AddIndex(indexCountTex);
 				}
 				indexCountTex++;
@@ -206,6 +229,12 @@ void Model::Initialize(const std::string& modelname) {
 		}
 	}
 	file.close();
+
+	// エッジ平滑化用データの追加
+	if (smoothing) {
+		// yキー(座標データ)の番号と、全て合成した頂点のインデックスをセットで登録する
+		mesh->CalculateSmoothedVertexNormals();
+	}
 
 	// コンテナに登録
 	meshes.emplace_back(mesh);
@@ -310,13 +339,13 @@ void Model::LoadMaterial(const std::string& directoryPath, const std::string& fi
 			pos1 = material->textureFilename.rfind('\\');
 			if (pos1 != string::npos) {
 				material->textureFilename = material->textureFilename.substr(
-				  pos1 + 1, material->textureFilename.size() - pos1 - 1);
+					pos1 + 1, material->textureFilename.size() - pos1 - 1);
 			}
 
 			pos1 = material->textureFilename.rfind('/');
 			if (pos1 != string::npos) {
 				material->textureFilename = material->textureFilename.substr(
-				  pos1 + 1, material->textureFilename.size() - pos1 - 1);
+					pos1 + 1, material->textureFilename.size() - pos1 - 1);
 			}
 		}
 	}
@@ -352,7 +381,7 @@ void Model::CreateDescriptorHeap() {
 
 	// デスクリプタサイズを取得
 	descriptorHandleIncrementSize =
-	  device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 
 void Model::LoadTextures() {
@@ -363,11 +392,11 @@ void Model::LoadTextures() {
 		Material* material = m.second;
 
 		CD3DX12_CPU_DESCRIPTOR_HANDLE cpuDescHandleSRV = CD3DX12_CPU_DESCRIPTOR_HANDLE(
-		  descHeap->GetCPUDescriptorHandleForHeapStart(), textureIndex,
-		  descriptorHandleIncrementSize);
+			descHeap->GetCPUDescriptorHandleForHeapStart(), textureIndex,
+			descriptorHandleIncrementSize);
 		CD3DX12_GPU_DESCRIPTOR_HANDLE gpuDescHandleSRV = CD3DX12_GPU_DESCRIPTOR_HANDLE(
-		  descHeap->GetGPUDescriptorHandleForHeapStart(), textureIndex,
-		  descriptorHandleIncrementSize);
+			descHeap->GetGPUDescriptorHandleForHeapStart(), textureIndex,
+			descriptorHandleIncrementSize);
 
 		// テクスチャなし
 		if (material->textureFilename.size() <= 0) {
@@ -384,7 +413,7 @@ void Model::LoadTextures() {
 void Model::Draw(ID3D12GraphicsCommandList* cmdList) {
 	// デスクリプタヒープの配列
 	if (descHeap) {
-		ID3D12DescriptorHeap* ppHeaps[] = {descHeap.Get()};
+		ID3D12DescriptorHeap* ppHeaps[] = { descHeap.Get() };
 		cmdList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 	}
 

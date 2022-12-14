@@ -9,7 +9,7 @@
 /// モデルデータ
 /// </summary>
 class Model {
-  private: // エイリアス
+private: // エイリアス
 	// Microsoft::WRL::を省略
 	template<class T> using ComPtr = Microsoft::WRL::ComPtr<T>;
 	// DirectX::を省略
@@ -18,16 +18,16 @@ class Model {
 	using XMFLOAT4 = DirectX::XMFLOAT4;
 	using XMMATRIX = DirectX::XMMATRIX;
 
-  private:
+private:
 	static const std::string baseDirectory;
 
-  private: // 静的メンバ変数
+private: // 静的メンバ変数
 	// デバイス
 	static ID3D12Device* device;
 	// デスクリプタサイズ
 	static UINT descriptorHandleIncrementSize;
 
-  public: // 静的メンバ関数
+public: // 静的メンバ関数
 	/// <summary>
 	/// 静的初期化
 	/// </summary>
@@ -38,10 +38,11 @@ class Model {
 	/// OBJファイルからメッシュ生成
 	/// </summary>
 	/// <param name="modelname">モデル名</param>
+	/// <param name="smoothing">エッジ平滑化フラグ</param>
 	/// <returns>生成されたモデル</returns>
-	static Model* CreateFromOBJ(const std::string& modelname);
+	static Model* CreateFromOBJ(const std::string& modelname, bool smoothing = false);
 
-  public: // メンバ関数
+public: // メンバ関数
 	/// <summary>
 	/// デストラクタ
 	/// </summary>
@@ -51,7 +52,8 @@ class Model {
 	/// 初期化
 	/// </summary>
 	/// <param name="modelname">モデル名</param>
-	void Initialize(const std::string& modelname);
+	/// <param name="smoothing">エッジ平滑化フラグ</param>
+	void Initialize(const std::string& modelname, bool smoothing);
 
 	/// <summary>
 	/// 描画
@@ -59,7 +61,7 @@ class Model {
 	/// <param name="cmdList">命令発行先コマンドリスト</param>
 	void Draw(ID3D12GraphicsCommandList* cmdList);
 
-  private: // メンバ変数
+private: // メンバ変数
 	// 名前
 	std::string name;
 	// メッシュコンテナ
@@ -71,7 +73,7 @@ class Model {
 	// デスクリプタヒープ
 	ComPtr<ID3D12DescriptorHeap> descHeap;
 
-  private: // メンバ関数
+private: // メンバ関数
 	/// <summary>
 	/// マテリアル読み込み
 	/// </summary>

@@ -7,21 +7,23 @@
 #include <d3dx12.h>
 #include <vector>
 #include <wrl.h>
+#include <unordered_map>
 
 /// <summary>
 /// 形状データ
 /// </summary>
 class Mesh {
-  private: // エイリアス
+private: // エイリアス
 	// Microsoft::WRL::を省略
 	template<class T> using ComPtr = Microsoft::WRL::ComPtr<T>;
 	// DirectX::を省略
 	using XMFLOAT2 = DirectX::XMFLOAT2;
 	using XMFLOAT3 = DirectX::XMFLOAT3;
 	using XMFLOAT4 = DirectX::XMFLOAT4;
+	using XMVECTOR = DirectX::XMVECTOR;
 	using XMMATRIX = DirectX::XMMATRIX;
 
-  public: // サブクラス
+public: // サブクラス
 	// 頂点データ構造体（テクスチャあり）
 	struct VertexPosNormalUv {
 		XMFLOAT3 pos;    // xyz座標
@@ -29,29 +31,33 @@ class Mesh {
 		XMFLOAT2 uv;     // uv座標
 	};
 
-  public: // 静的メンバ関数
+public: // 静的メンバ関数
 	/// <summary>
 	/// 静的初期化
 	/// </summary>
 	/// <param name="device">デバイス</param>
 	static void StaticInitialize(ID3D12Device* device);
 
-  private: // 静的メンバ変数
+private: // 静的メンバ変数
 	// デバイス
 	static ID3D12Device* device;
 
-  public: // メンバ関数
+public: // メンバ関数
 	/// <summary>
-	/// 名前を取得
+	/// 描画
 	/// </summary>
-	/// <returns>名前</returns>
-	const std::string& GetName() { return name; }
+	/// <param name="cmdList">命令発行先コマンドリスト</param>
+	void Draw(ID3D12GraphicsCommandList* cmdList);
 
 	/// <summary>
-	/// 名前をセット
+	/// バッファの生成
 	/// </summary>
-	/// <param name="name">名前</param>
-	void SetName(const std::string& name);
+	void CreateBuffers();
+
+	/// <summary>
+	/// 平滑化された頂点法線の計算
+	/// </summary>
+	void CalculateSmoothedVertexNormals();
 
 	/// <summary>
 	/// 頂点データの追加
@@ -66,10 +72,18 @@ class Mesh {
 	void AddIndex(unsigned short index);
 
 	/// <summary>
-	/// マテリアルの取得
+	/// エッジ平滑化データの追加
 	/// </summary>
-	/// <returns>マテリアル</returns>
-	Material* GetMaterial() { return material; }
+	/// <param name="indexPosition">座標インデックス</param>
+	/// <param name="indexVertex">頂点インデックス</param>
+	void AddSmoothData(unsigned short indexPosition, unsigned short indexVertex);
+
+public: // アクセッサ
+	/// <summary>
+	/// 名前をセット
+	/// </summary>
+	/// <param name="name">名前</param>
+	void SetName(const std::string& name);
 
 	/// <summary>
 	/// マテリアルの割り当て
@@ -78,9 +92,16 @@ class Mesh {
 	void SetMaterial(Material* material);
 
 	/// <summary>
-	/// バッファの生成
+	/// 名前を取得
 	/// </summary>
-	void CreateBuffers();
+	/// <returns>名前</returns>
+	const std::string& GetName() { return name; }
+
+	/// <summary>
+	/// マテリアルの取得
+	/// </summary>
+	/// <returns>マテリアル</returns>
+	Material* GetMaterial() { return material; }
 
 	/// <summary>
 	/// 頂点バッファ取得
@@ -95,12 +116,12 @@ class Mesh {
 	const D3D12_INDEX_BUFFER_VIEW& GetIBView() { return ibView; }
 
 	/// <summary>
-	/// 描画
+	/// 頂点データの数を取得
 	/// </summary>
-	/// <param name="cmdList">命令発行先コマンドリスト</param>
-	void Draw(ID3D12GraphicsCommandList* cmdList);
+	/// <returns>頂点データの数</returns>
+	inline size_t GetVertexCount() { return vertices.size(); }
 
-  private: // メンバ変数
+private: // メンバ変数
 	// 名前
 	std::string name;
 	// 頂点バッファ
@@ -121,4 +142,6 @@ class Mesh {
 	VertexPosNormalUv* vertMap = nullptr;
 	// インデックスバッファのマップ
 	unsigned short* indexMap = nullptr;
+	// 頂点法線スムージング用データ
+	std::unordered_map<unsigned short, std::vector<unsigned short>> smoothData;
 };
