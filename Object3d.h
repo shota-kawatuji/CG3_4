@@ -8,7 +8,7 @@
 #include <string>
 #include "Model.h"
 #include "Camera.h"
-#include "Light.h"
+#include "LightGroup.h"
 
 /// <summary>
 /// 3Dオブジェクト
@@ -42,9 +42,6 @@ public: // サブクラス
 		XMMATRIX world;		// ワールド行列
 		XMFLOAT3 cameraPos;	// カメラ座標(ワールド座標)
 	};
-
-private: // 定数
-
 
 public: // 静的メンバ関数
 	/// <summary>
@@ -92,7 +89,7 @@ private: // 静的メンバ変数
 	// カメラ
 	static Camera* sCamera_;
 	// ライト
-	static Light* light;
+	static LightGroup* lightGroup;
 
 public: // メンバ関数
 	bool Initialize();
@@ -146,11 +143,11 @@ public: // アクセッサ
 	void SetBillboard(bool isBillboard) { this->isBillboard = isBillboard; }
 
 	/// <summary>
-	/// ライトのセット
+	/// 
 	/// </summary>
-	/// <param name="light">ライト</param>
-	static void SetLight(Light* light) {
-		Object3d::light = light;
+	/// <param name="lightGroup"></param>
+	static void SetLightGroup(LightGroup* lightGroup) {
+		Object3d::lightGroup = lightGroup;
 	}
 
 private: // メンバ変数
@@ -169,8 +166,8 @@ private: // メンバ変数
 	Object3d* parent = nullptr;
 	// モデル
 	Model* model = nullptr;
-	// ビルボード
-	bool isBillboard = false;
 	// 定数バッファのマップ
 	ConstBufferDataB0* constMap = nullptr;
+	// ビルボード
+	bool isBillboard = false;
 };

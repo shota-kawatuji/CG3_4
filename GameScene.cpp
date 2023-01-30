@@ -61,6 +61,7 @@ void GameScene::Initialize(DirectXCommon* dxCommon, Input* input)
 	objSphere = Object3d::Create();
 	// ライト生成
 	light = Light::Create();
+	lightGroup = LightGroup::Create();
 
 	// テクスチャ2番に読み込み
 	Sprite::LoadTexture(2, L"Resources/texture.png");
@@ -79,8 +80,18 @@ void GameScene::Initialize(DirectXCommon* dxCommon, Input* input)
 	// ライト色を指定
 	light->SetLightColor({ 1,1,1 });
 	// 3Dオブジェクトにライトをセット
-	Object3d::SetLight(light);
+	//Object3d::SetLight(light);
 
+	lightGroup->SetDirLightColor(1, { 1,1,1 });
+	Object3d::SetLightGroup(lightGroup);
+
+	lightGroup->SetDirLightActive(0, false);
+	lightGroup->SetDirLightActive(1, false);
+	lightGroup->SetDirLightActive(2, false);
+	lightGroup->SetPointLightActive(0, true);
+	pointLightPos[0] = 0.5f;
+	pointLightPos[1] = 1.0f;
+	pointLightPos[2] = 0.0f;
 }
 
 void GameScene::Update()
@@ -98,6 +109,12 @@ void GameScene::Update()
 		rot.y += 1.0f;
 		objSphere->SetRotation(rot);
 		objFighter->SetRotation(rot);
+	}
+
+	{// imguiからのライトパラメータを反映
+		lightGroup->SetPointLightPos(0, XMFLOAT3(pointLightPos));
+		lightGroup->SetPointLightColor(0, XMFLOAT3(pointLightColor));
+		lightGroup->SetPointLightAtten(0, XMFLOAT3(pointLightAtten));
 	}
 
 	{
@@ -140,6 +157,14 @@ void GameScene::Update()
 
 void GameScene::Draw()
 {
+	ImGui::Begin("Light");
+	ImGui::SetWindowPos(ImVec2(0, 0));
+	ImGui::SetWindowSize(ImVec2(500, 200));
+	ImGui::ColorEdit3("pointLightColor", pointLightColor, ImGuiColorEditFlags_Float);
+	ImGui::InputFloat3("pointLightPos", pointLightPos);
+	ImGui::InputFloat3("pointLightAtten", pointLightAtten);
+	ImGui::End();
+
 	// コマンドリストの取得
 	ID3D12GraphicsCommandList* cmdList = dxCommon->GetCommandList();
 
@@ -165,10 +190,9 @@ void GameScene::Draw()
 
 	// 3Dオブクジェクトの描画
 	//objSkydome->Draw();
-	//objGround->Draw();
+	objGround->Draw();
 	objFighter->Draw();
 	objSphere->Draw();
-	//light->Draw();
 
 	/// <summary>
 	/// ここに3Dオブジェクトの描画処理を追加できる

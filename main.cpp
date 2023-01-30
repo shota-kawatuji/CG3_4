@@ -2,6 +2,7 @@
 #include "DirectXCommon.h"
 #include "GameScene.h"
 #include "Light.h"
+#include "LightGroup.h"
 
 // Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
@@ -33,6 +34,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
 	// ライト静的初期化
 	Light::StaticInitialize(dxCommon->GetDevice());
+
+	LightGroup::StaticInitialize(dxCommon->GetDevice());
 
 #pragma endregion
 

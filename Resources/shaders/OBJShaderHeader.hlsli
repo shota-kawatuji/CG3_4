@@ -14,10 +14,32 @@ cbuffer cbuff1 : register(b1)
 	float m_alpha : packoffset(c2.w);	// アルファ
 }
 
+// 平行光源の数
+static const int DIRLIGHT_NUM = 3;
+
+struct DirLight
+{
+	float3 lightv;    // ライトへの方向の単位ベクトル
+	float3 lightcolor;    // ライトの色(RGB)
+	uint active;
+};
+
+// 点光源の数
+static const int POINTLIGHT_NUM = 3;
+
+struct PointLight
+{
+	float3 lightpos; // ライト座標
+	float3 lightcolor; // ライト色(RGB)
+	float3 lightatten; // ライト距離減衰係数
+	uint active;
+};
+
 cbuffer cbuff2 : register(b2)
 {
-	float3 lightv; // ライトへの方向の単位ベクトル
-	float3 lightcolor; // ライトの色(RGB)
+	float3 ambientColor;
+	DirLight dirLights[DIRLIGHT_NUM];
+	PointLight pointLights[POINTLIGHT_NUM];
 }
 
 // 頂点シェーダーからピクセルシェーダーへのやり取りに使用する構造体
@@ -28,3 +50,4 @@ struct VSOutput
 	float3 normal : NORMAL; // 法線
 	float2 uv  : TEXCOORD; // uv値
 };
+
